@@ -142,11 +142,37 @@ BOOST_AUTO_TEST_CASE(test_insert_pointer) {
 /**
  * serialize and deserialize
  */
+BOOST_AUTO_TEST_CASE(test_serialize_deserialize_reserve) {
+    // insert x values; delete some values; serialize set; deserialize in new
+    // set; check equal. for deserialization, test it with and without hash
+    // compatibility.
+    for(std::size_t nb_values : {0, 1, 3, 17, 1000}) {
+        tsl::sparse_set<move_only_test> set;
+        set.reserve(nb_values);
+        for(std::size_t i = 0; i < nb_values; i++) {
+            set.insert(utils::get_key<move_only_test>(i));
+        }
+
+
+        serializer serial;
+        set.serialize(serial);
+
+        deserializer dserial(serial.str());
+        auto set_deserialized = decltype(set)::deserialize(dserial, true);
+        BOOST_CHECK(set == set_deserialized);
+
+        deserializer dserial2(serial.str());
+        set_deserialized = decltype(set)::deserialize(dserial2, false);
+        BOOST_CHECK(set_deserialized == set);
+    }
+}
+
+    
 BOOST_AUTO_TEST_CASE(test_serialize_deserialize) {
     // insert x values; delete some values; serialize set; deserialize in new
     // set; check equal. for deserialization, test it with and without hash
     // compatibility.
-    for(std::size_t nb_values : {0, 1, 100, 1000}) {
+    for(std::size_t nb_values : {0, 1, 3, 17, 1000}) {
         tsl::sparse_set<move_only_test> set;
         for(std::size_t i = 0; i < nb_values + 40; i++) {
             set.insert(utils::get_key<move_only_test>(i));
